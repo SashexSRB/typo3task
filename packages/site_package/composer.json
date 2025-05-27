@@ -1,0 +1,23 @@
+{
+    "name": "sashex/site_package",
+    "description": "typo3 eigenextension",
+    "type": "typo3-cms-extension",
+    "authors": [
+        {
+            "name": "Aleksandar Jovancic",
+            "email": "aleksandar.jovancic@hotbytes.de",
+            "homepage": "https://t3test.ddev.site",
+            "role": "creator"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Sashex\\SitePackage\\": "Classes/"
+        }
+    },
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "site_package"
+        }
+    }
+}
