@@ -2,5 +2,5 @@
 2. Eigene extension, dass die CSS einbindet - OK
 3. News Extension installieren - OK
 4. Einrichten, den Ordner News in backend hinzufügen - OK
-5. In Frontend, latest, list, detail Ansichten.
-6. Templates auslagern
+5. In Frontend, latest, list, detail Ansichten. - RESEARCH
+6. Templates auslagern - RESEARCH
