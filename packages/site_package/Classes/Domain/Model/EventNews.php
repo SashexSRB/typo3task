@@ -30,7 +30,7 @@ class EventNews extends ModelNews {
     public function setLocation(string $location) {
         $this->location = $location;
     }
-    public function setDate(\DateTi $date) {  
+    public function setDate(\DateTime $date) {  
         $this->date = $date;
     }
     public function setOrganizer(string $organizer) { 

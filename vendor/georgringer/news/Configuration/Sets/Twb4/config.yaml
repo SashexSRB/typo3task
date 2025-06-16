@@ -1,4 +1,0 @@
-name: georgringer/news-twb4
-label: News Bootstrap 4 Styles [Addon]
-dependencies:
-  - georgringer/news
