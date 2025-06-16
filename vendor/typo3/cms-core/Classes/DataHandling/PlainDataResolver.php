@@ -276,7 +276,8 @@ class PlainDataResolver
         }
 
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable($this->tableName);
-        $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+        // Never apply additional restrictions like 'deleted' to the incoming id list
+        $queryBuilder->getRestrictions()->removeAll();
         $queryBuilder
             ->select('uid')
             ->from($this->tableName)

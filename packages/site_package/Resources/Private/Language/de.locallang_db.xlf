@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<xliff version="1.0">
+  <file source-language="en" datatype="plaintext" original="messages" date="2025-06-06T00:00:00Z">
+    <body>
+      <trans-unit id="location">
+        <source>Event Info</source>
+        <target>Info</target>
+      </trans-unit>
+      <trans-unit id="location">
+        <source>Location</source>
+        <target>Ort</target>
+      </trans-unit>
+      <trans-unit id="date">
+        <source><![CDATA[Date & Time]]></source>
+        <target>Datum und Zeit</target>
+      </trans-unit>
+      <trans-unit id="organizer">
+        <source>Organizer</source>
+        <target>Veranstalter</target>
+      </trans-unit>
+      <trans-unit id="price">
+        <source>Price</source>
+        <target>Preis</target>
+      </trans-unit>
+      <trans-unit id="website">
+        <source>Website</source>
+        <target>Link zur Webseite</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

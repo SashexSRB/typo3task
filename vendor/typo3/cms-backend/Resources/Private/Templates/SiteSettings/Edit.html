@@ -28,11 +28,12 @@
             </f:then>
             <f:else>
                 <typo3-backend-settings-editor
+                    form-name="sitesettings_form"
                     action-url="{actionUrl}"
-                    dump-url="{dumpUrl}"
                     categories="{categories -> f:format.json()}"
                     custom-form-data="{f:format.json(value: {formToken: formToken, returnUrl: returnUrl})}"
-                    {f:if(condition: debug, then: 'debug')}
+                    mode="{mode.value}"
+                    {f:if(condition: "{mode.value} === advanced", then: 'dump-url="{dumpUrl}"')}
                 ></typo3-backend-settings-editor>
             </f:else>
         </f:if>

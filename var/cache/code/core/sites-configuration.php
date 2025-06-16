@@ -3,23 +3,26 @@ return array (
   'main' => 
   array (
     'base' => '/',
+    'errorHandling' => 
+    array (
+    ),
     'languages' => 
     array (
       0 => 
       array (
-        'title' => 'German',
+        'title' => 'English',
         'enabled' => true,
         'languageId' => 0,
         'base' => '/',
-        'locale' => 'de_DE.UTF-8',
-        'navigationTitle' => 'Deutsch',
-        'flag' => 'de',
-        'hreflang' => 'de-DE',
-        'websiteTitle' => 'Deutsch',
+        'locale' => 'en_US.UTF-8',
+        'navigationTitle' => 'English',
+        'flag' => 'us',
       ),
     ),
     'rootPageId' => 1,
-    'websiteTitle' => '',
+    'routes' => 
+    array (
+    ),
   ),
 );
 #

@@ -4,3 +4,5 @@
 4. Einrichten, den Ordner News in backend hinzufügen - OK
 5. In Frontend, latest, list, detail Ansichten. - RESEARCH
 6. Templates auslagern - RESEARCH
+7. TCA Overrides
+8. Eigene datensaetze machen

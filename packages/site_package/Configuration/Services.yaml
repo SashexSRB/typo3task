@@ -1,0 +1,12 @@
+services:
+  _defaults: 
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Sashex\SitePackage\:
+    resource: '../Classes/*'
+    exclude: '../Classes/Domain/Model/*'
+  
+  GeorgRinger\News\Domain\Model\News:
+    class: Sashex\SitePackage\Domain\Model\EventNews

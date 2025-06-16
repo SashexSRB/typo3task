@@ -1,1 +1,41 @@
+page = PAGE
 
+page.includeCSS.site_package = EXT:site_package/Resources/Public/Css/style.css
+
+plugin.tx_news {
+  view {
+    templateRootPaths.10 = EXT:site_package/Resources/Private/Extensions/news/Templates/
+    partialRootPaths.10 = EXT:site_package/Resources/Private/Extensions/news/Partials/
+    layoutRootPaths.10 = EXT:site_package/Resources/Private/Extensions/news/Layouts/
+  }
+}
+
+plugin.tx_news {
+  persistence {
+    classes {
+      GeorgRinger\News\Domain\Model\News {
+        subclasses {
+          Sashex\SitePackage\Domain\Model\EventNews = Sashex\SitePackage\Domain\Model\EventNews
+        }
+      }
+      Sashex\SitePackage\Domain\Model\EventNews {
+        mapping {
+          tableName = tx_news_domain_model_news
+        }
+      }
+    }
+  }
+}
+
+page.10 = TEXT
+page.10.data = page:title
+page.10.wrap = <h1>|</h1>
+
+page.100 = CONTENT
+page.100 {
+  table = tt_content
+  select.pidInList.data = page:uid
+  select.orderBy = sorting
+  select.where = colPos=0
+  renderObj =< tt_content
+}

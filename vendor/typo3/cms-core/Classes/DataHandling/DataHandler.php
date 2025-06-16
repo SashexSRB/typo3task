@@ -1079,7 +1079,6 @@ class DataHandler
      * Filling in the field array
      * $this->excludedTablesAndFields is used to filter fields if needed.
      *
-     * @param string $table Table name
      * @param int|string $id Record ID
      * @param array $fieldArray Default values, Preset $fieldArray with 'pid' maybe (pid and uid will be not be overridden anyway)
      * @param array $incomingFieldArray Is which fields/values you want to set. There are processed and put into $fieldArray if OK
@@ -1088,9 +1087,8 @@ class DataHandler
      * @param int $tscPID TSconfig PID
      * @internal should only be used from within DataHandler
      */
-    public function fillInFieldArray($table, $id, array $fieldArray, array $incomingFieldArray, $realPid, $status, $tscPID): array
+    public function fillInFieldArray(string $table, $id, array $fieldArray, array $incomingFieldArray, $realPid, $status, $tscPID): array
     {
-        // Initialize:
         $schema = $this->tcaSchemaFactory->get($table);
         $originalLanguageRecord = null;
         $originalLanguage_diffStorage = null;
@@ -1191,7 +1189,16 @@ class DataHandler
                             $fieldArray[$field] = $res['value'];
                         }
                         // Add the value of the original record to the diff-storage content:
-                        if ($languageCapability && $languageCapability->hasDiffSourceField()) {
+                        if ($languageCapability && $languageCapability->hasDiffSourceField()
+                            // not "sys_language_uid", this is 0 in default language record by definition
+                            && $languageCapability->getLanguageField()->getName() !== (string)$field
+                            // not the "diffsource" field itself
+                            && $languageCapability->getDiffSourceField()->getName() !== (string)$field
+                            // not "l10n_parent", this is 0 in default language record by definition
+                            && $languageCapability->getTranslationOriginPointerField()->getName() !== (string)$field
+                            // not "l10n_source", this is 0 in default language record by definition
+                            && !($languageCapability->hasTranslationSourceField() && $languageCapability->getTranslationOriginPointerField()->getName() === (string)$field)
+                        ) {
                             if (!is_array($originalLanguage_diffStorage)) {
                                 $originalLanguage_diffStorage = [];
                             }
@@ -1224,6 +1231,7 @@ class DataHandler
         ) {
             // If the field is set it would probably be because of an undo-operation - in which case we should not
             // update the field of course. On the other hand, e.g. for record localization, we need to update the field.
+            ksort($originalLanguage_diffStorage);
             $fieldArray[$languageCapability->getDiffSourceField()->getName()] = json_encode($originalLanguage_diffStorage);
         }
         return $fieldArray;
@@ -4953,7 +4961,14 @@ class DataHandler
                     $overrideValues[$field->getName()] = $row[$field->getName()];
                 }
             }
-            if (($field->getConfiguration()['MM'] ?? false) && !empty($field->getConfiguration()['MM_oppositeUsage'])) {
+            if (($field->getConfiguration()['MM'] ?? false)
+                // To determine the local side for fields with 'MM' config, we check if the field either
+                // has "MM_oppositeUsage" (foreign table names / field names) defined — e.g., sys_category with
+                // opposite usage to the table "pages" with the field "categories" — or if it does not have
+                // "MM_opposite_field" set. This field is set by the foreign side (e.g., an inline child)
+                // to allow editing the connection from both sides (bidirectional).
+                && (!empty($field->getConfiguration()['MM_oppositeUsage']) || !isset($field->getConfiguration()['MM_opposite_field']))
+            ) {
                 // We are localizing the 'local' side of an MM relation. (eg. localizing a category).
                 // In this case, MM relations connected to the default lang record should not be copied,
                 // so we set an override here to not trigger mm handling of 'items' field for this.
@@ -5505,7 +5520,10 @@ class DataHandler
             $this->connectionPool->getConnectionForTable($table)->update($table, $updateFields, ['uid' => $uid]);
             $this->log($table, $uid, SystemLogDatabaseAction::DELETE, null, SystemLogErrorClassification::MESSAGE, 'Record {table}:{uid} was deleted from pages:{pid}', null, ['table' => $table, 'uid' =>  $uid, 'pid' => (int)($recordToDelete['pid'] ?? 0)], (int)($recordToDelete['pid'] ?? 0));
         } else {
-            $this->deleteRecord_procFields($table, $recordToDelete, $forceHardDelete);
+            // Delete child records. If the parent table is NOT soft-delete aware, it will get
+            // hard deleted. Attached children have to be hard-deleted aware as well, they'd be
+            // "orphaned" otherwise. We thus $forceHardDelete=true to deleteRecord_procFields().
+            $this->deleteRecord_procFields($table, $recordToDelete, true);
             $this->hardDeleteSingleRecord($table, $uid);
             $this->deleteL10nOverlayRecords($table, $uid);
             $this->log($table, $uid, SystemLogDatabaseAction::DELETE, null, SystemLogErrorClassification::MESSAGE, 'Record {table}:{uid} was deleted unrecoverable from pages:{pid}', null, ['table' => $table, 'uid' =>  $uid, 'pid' => (int)($recordToDelete['pid'] ?? 0)], (int)($recordToDelete['pid'] ?? 0));
@@ -5763,13 +5781,18 @@ class DataHandler
             if ($configuration['type'] === 'inline' || $configuration['type'] === 'file') {
                 if (in_array($this->getRelationFieldType($configuration), ['list', 'field'], true)) {
                     $dbAnalysis = $this->createRelationHandlerInstance();
+                    if ($forceHardDelete) {
+                        // @todo: This should be called "disableDeleteClause" or similar. Also, PlainDataResolver
+                        //        still applies deleteClause in processSorting() which can not be disabled.
+                        $dbAnalysis->undeleteRecord = true;
+                    }
                     $dbAnalysis->start($value, $configuration['foreign_table'], '', $uid, $table, $configuration);
-                    $dbAnalysis->undeleteRecord = true;
                     // Non type save comparison is intended!
                     if (!isset($configuration['behaviour']['enableCascadingDelete']) || $configuration['behaviour']['enableCascadingDelete'] != false) {
                         // Walk through the items and remove them
                         foreach ($dbAnalysis->itemArray as $v) {
-                            $this->deleteAction($v['table'], (int)$v['id']);
+                            // @todo: It would be so much better when RelationHandler could return full rows ...
+                            $this->deleteAction($v['table'], (int)$v['id'], false, $forceHardDelete);
                         }
                     }
                 }
@@ -5818,13 +5841,17 @@ class DataHandler
                             if ($flexFieldConfig['type'] === 'inline' || $flexFieldConfig['type'] === 'file') {
                                 if (in_array($this->getRelationFieldType($flexFieldConfig), ['list', 'field'], true)) {
                                     $dbAnalysis = $this->createRelationHandlerInstance();
+                                    if ($forceHardDelete) {
+                                        // @todo: This should be called "disableDeleteClause" or similar. Also, PlainDataResolver
+                                        //        still applies deleteClause in processSorting() which can not be disabled.
+                                        $dbAnalysis->undeleteRecord = true;
+                                    }
                                     $dbAnalysis->start($flexFormValue, $flexFieldConfig['foreign_table'], '', $uid, $table, $flexFieldConfig);
-                                    $dbAnalysis->undeleteRecord = true;
                                     // Non type save comparison is intended!
                                     if (!isset($flexFieldConfig['behaviour']['enableCascadingDelete']) || $flexFieldConfig['behaviour']['enableCascadingDelete'] != false) {
                                         // Walk through the items and remove them
                                         foreach ($dbAnalysis->itemArray as $v) {
-                                            $this->deleteAction($v['table'], (int)$v['id']);
+                                            $this->deleteAction($v['table'], (int)$v['id'], false, $forceHardDelete);
                                         }
                                     }
                                 }
@@ -6241,12 +6268,12 @@ class DataHandler
     protected function discardRecordRelations(string $table, array $record): void
     {
         $schema = $this->tcaSchemaFactory->get($table);
-        foreach ($record as $field => $value) {
-            if (!$schema->hasField($field)) {
+        foreach ($record as $fieldName => $value) {
+            if (!$schema->hasField($fieldName)) {
                 continue;
             }
             /** @var InlineFieldType|FileFieldType $fieldType */
-            $fieldType = $schema->getField($field);
+            $fieldType = $schema->getField($fieldName);
             $fieldConfig = $fieldType->getConfiguration();
 
             if ($fieldType->isType(TableColumnType::INLINE, TableColumnType::FILE)) {
@@ -6267,8 +6294,38 @@ class DataHandler
                 }
             } elseif ($this->isReferenceField($fieldConfig) && !empty($fieldConfig['MM'])) {
                 $this->discardMmRelations($table, $fieldConfig, $record);
+            } elseif ($fieldType->isType(TableColumnType::FLEX) && (string)$value !== '') {
+                try {
+                    $dataStructureIdentifier = $this->flexFormTools->getDataStructureIdentifier(['config' => $fieldConfig], $table, $fieldName, $record);
+                    $dataStructureArray = $this->flexFormTools->parseDataStructureByIdentifier($dataStructureIdentifier);
+                } catch (AbstractInvalidDataStructureException) {
+                    // Nothing to do if data structure could not be determined
+                    continue;
+                }
+                if ($dataStructureArray !== []) {
+                    $flexForm = GeneralUtility::xml2array($value);
+                    foreach (($dataStructureArray['sheets'] ?? []) as $sheetName => $sheet) {
+                        foreach ($sheet['ROOT']['el'] as $sheetFieldName => $flexField) {
+                            $flexFormValue = $flexForm['data'][$sheetName]['lDEF'][$sheetFieldName]['vDEF'] ?? null;
+                            $flexFieldConfig = $flexField['config'] ?? [];
+                            if (!isset($flexFieldConfig['type'])) {
+                                continue;
+                            }
+                            if ($flexFieldConfig['type'] === 'inline' || $flexFieldConfig['type'] === 'file') {
+                                if (in_array($this->getRelationFieldType($flexFieldConfig), ['list', 'field'], true)) {
+                                    $dbAnalysis = $this->createRelationHandlerInstance();
+                                    $dbAnalysis->start($flexFormValue, $flexFieldConfig['foreign_table'], '', (int)$record['uid'], $table, $flexFieldConfig);
+                                    foreach ($dbAnalysis->itemArray as $relationRecord) {
+                                        $this->discard($relationRecord['table'], (int)$relationRecord['id']);
+                                    }
+                                }
+                            } elseif ($this->isReferenceField($flexFieldConfig)) {
+                                $this->discardMmRelations($table, $flexFieldConfig, $record);
+                            }
+                        }
+                    }
+                }
             }
-            // @todo not inline and not mm - probably not handled correctly and has no proper test coverage yet
         }
     }
 
@@ -8918,7 +8975,7 @@ class DataHandler
             $clearCacheCommands = array_unique($commands);
         }
         // Call post-processing function for clear-cache:
-        $_params = ['table' => $table, 'uid' => $uid, 'uid_page' => $pageUid, 'TSConfig' => $TSConfig, 'tags' => $tagsToClear, 'clearCacheEnabled' => $clearCacheEnabled];
+        $_params = ['table' => $table, 'uid' => $uid, 'uid_page' => $pageUid, 'TSConfig' => $TSConfig, 'tags' => &$tagsToClear, 'clearCacheCommands' => &$clearCacheCommands, 'clearCacheEnabled' => $clearCacheEnabled];
         foreach ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_tcemain.php']['clearCachePostProc'] ?? [] as $_funcRef) {
             GeneralUtility::callUserFunction($_funcRef, $_params, $this);
         }

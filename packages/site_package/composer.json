@@ -19,5 +19,8 @@
         "typo3/cms": {
             "extension-key": "site_package"
         }
+    },
+    "require": {
+        "georgringer/news": "^12.3"
     }
 }

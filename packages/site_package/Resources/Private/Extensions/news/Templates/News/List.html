@@ -1,0 +1,38 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+      xmlns:n="http://typo3.org/ns/GeorgRinger/News/ViewHelpers"
+      data-namespace-typo3-fluid="true">
+<f:layout name="General" />
+
+<f:section name="content">
+  <!--TYPO3SEARCH_end-->
+
+  <div class="news-list-custom" id="news-container-{contentObjectData.uid}">
+    <f:debug>{_all}</f:debug>
+    <f:if condition="{news}">
+      <f:for each="{news}" as="newsItem">
+        <article class="news-entry">
+          <h2 class="news-title">{newsItem.title}</h2>
+          <f:if condition="{newsItem.media -> f:count()}">
+            <div class="news-image">
+              <f:media file="{newsItem.media.0}" width="300" height="auto" />
+            </div>
+          </f:if>
+
+          <p class="news-teaser">{newsItem.teaser}</p>
+
+          <a href="{f:uri.action(action: 'detail', arguments: {news: newsItem})}" class="read-more-button">
+            Read more →
+          </a>
+        </article>
+      </f:for>
+    <f:else>
+      <div class="no-news-found">
+        <f:translate key="list_nonewsfound" />
+      </div>
+    </f:else>
+    </f:if>
+  </div>
+
+  <!--TYPO3SEARCH_begin-->
+</f:section>
+</html>
