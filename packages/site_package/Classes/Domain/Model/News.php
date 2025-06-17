@@ -2,9 +2,8 @@
 
 namespace Sashex\SitePackage\Domain\Model;
 
-use GeorgRinger\News\Domain\Model\News as ModelNews;
 
-class EventNews extends ModelNews {
+class News extends GeorgRinger\News\Domain\Model\News {
     protected string $location;
     protected \DateTime $date;
     protected string $organizer;

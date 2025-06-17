@@ -10,23 +10,6 @@ plugin.tx_news {
   }
 }
 
-plugin.tx_news {
-  persistence {
-    classes {
-      GeorgRinger\News\Domain\Model\News {
-        subclasses {
-          Sashex\SitePackage\Domain\Model\EventNews = Sashex\SitePackage\Domain\Model\EventNews
-        }
-      }
-      Sashex\SitePackage\Domain\Model\EventNews {
-        mapping {
-          tableName = tx_news_domain_model_news
-        }
-      }
-    }
-  }
-}
-
 page.10 = TEXT
 page.10.data = page:title
 page.10.wrap = <h1>|</h1>

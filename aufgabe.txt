@@ -5,4 +5,4 @@
 5. In Frontend, latest, list, detail Ansichten. - RESEARCH
 6. Templates auslagern - RESEARCH
 7. TCA Overrides
-8. Eigene datensaetze machen
+8. Eigene datensaetze machen mit eigener DB tabelle. TCA nicht vergessen. vllt bei News abspicken

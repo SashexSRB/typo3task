@@ -7,8 +7,8 @@
   <!--TYPO3SEARCH_end-->
 
   <div class="news-list-custom" id="news-container-{contentObjectData.uid}">
-    <f:debug>{_all}</f:debug>
     <f:if condition="{news}">
+      <f:then>
       <f:for each="{news}" as="newsItem">
         <article class="news-entry">
           <h2 class="news-title">{newsItem.title}</h2>
@@ -20,11 +20,12 @@
 
           <p class="news-teaser">{newsItem.teaser}</p>
 
-          <a href="{f:uri.action(action: 'detail', arguments: {news: newsItem})}" class="read-more-button">
-            Read more →
-          </a>
+          <n:link newsItem="{newsItem}" settings="{settings}" title="{newsItem.title}">
+							Foo test 
+					</n:link>
         </article>
       </f:for>
+    </f:then>
     <f:else>
       <div class="no-news-found">
         <f:translate key="list_nonewsfound" />

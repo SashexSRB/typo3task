@@ -65,8 +65,6 @@
 							<f:format.date format="{f:translate(key:'dateFormat')}">{newsItem.datetime}</f:format.date>
 						</time>
 					</span>
-
-					<f:debug>{newsItem}</f:debug>
 					<f:if condition="{newsItem.location} || {newsItem.date} || {newsItem.organizer}">
 						<div class="event-meta">
 							<h4>Event Information</h4>
